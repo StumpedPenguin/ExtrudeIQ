@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { createQuote, type NewQuoteInput } from "@/lib/quotes/createQuote";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   try {
     const supa = await supabaseServer();

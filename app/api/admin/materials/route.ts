@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 
+export const runtime = "nodejs";
+
 async function requireAdmin() {
   const supa = await supabaseServer();
   const { data: auth } = await supa.auth.getUser();

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { recomputeFromInputs } from "@/lib/quotes/recomputeRevision";
 
+export const runtime = "nodejs";
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
