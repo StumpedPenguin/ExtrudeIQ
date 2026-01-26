@@ -1,5 +1,6 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { signInAction } from "./actions";
 
 export default async function LoginPage({
   searchParams,
@@ -8,22 +9,6 @@ export default async function LoginPage({
 }) {
   const { error } = await searchParams;
   const supa = await supabaseServer();
-
-  async function signIn(formData: FormData) {
-    "use server";
-
-    const email = String(formData.get("email") || "");
-    const password = String(formData.get("password") || "");
-
-    const supa = await supabaseServer();
-    const { error } = await supa.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      redirect(`/login?error=${encodeURIComponent(error.message)}`);
-    }
-
-    redirect("/dashboard");
-  }
 
   return (
     <main
@@ -83,7 +68,7 @@ export default async function LoginPage({
 
         {/* Login form */}
         <div style={{ padding: 24 }}>
-          <form action={signIn} style={{ display: "grid", gap: 14 }}>
+          <form action={signInAction} style={{ display: "grid", gap: 14 }}>
             <label style={{ display: "grid", gap: 6 }}>
               <span style={{ fontSize: 13, fontWeight: 600 }}>Email</span>
               <input
