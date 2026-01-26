@@ -1,2 +1,11 @@
-// Temporarily disabling middleware to test if it's causing the 500 error
-// If the app works without this, the issue is with middleware configuration
+import { NextRequest, NextResponse } from "next/server";
+
+export function middleware(request: NextRequest) {
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
+};

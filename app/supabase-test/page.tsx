@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabaseBrowser } from "@/lib/supabase/client";
+import { createBrowserClient } from "@/lib/supabase/client";
 
-const supabase = supabaseBrowser();
+const supabase = createBrowserClient();
 
 
 export default function SupabaseTestPage() {
