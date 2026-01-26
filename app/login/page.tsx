@@ -2,6 +2,8 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { signInAction } from "./actions";
 
+export const runtime = "nodejs";
+
 export default async function LoginPage({
   searchParams,
 }: {

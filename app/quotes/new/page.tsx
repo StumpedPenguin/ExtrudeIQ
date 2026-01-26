@@ -1,6 +1,8 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import NewQuoteForm from "./ui";
 
+export const runtime = "nodejs";
+
 export default async function NewQuotePage() {
   const supa = await supabaseServer();
 
