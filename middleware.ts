@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
+  // Middleware runs in Edge Runtime - keep it minimal, don't import server-only modules
   return NextResponse.next();
 }
 
