@@ -1,6 +1,7 @@
 // app/quotes/[id]/page.tsx
 import { supabaseServer } from "@/lib/supabase/server";
 import NewRevisionButton from "./NewRevisionButton";
+import DeleteQuoteButton from "./DeleteQuoteButton";
 
 function money(n: number) {
   if (!Number.isFinite(n)) return "-";
@@ -25,6 +26,15 @@ export default async function QuoteDetailPage({
       </main>
     );
   }
+
+  // Check if user is admin (for delete button visibility)
+  const { data: userProfile } = await supa
+    .from("profiles")
+    .select("role")
+    .eq("id", auth.user.id)
+    .single();
+
+  const isAdmin = userProfile?.role === "admin";
 
   const { data: quote, error: qErr } = await supa
     .from("quotes")
@@ -108,6 +118,13 @@ export default async function QuoteDetailPage({
             <p style={{ marginTop: 8, color: "crimson", fontSize: 12 }}>
               Revision load warning: {rErr.message}
             </p>
+          )}
+
+          {/* Admin delete button */}
+          {isAdmin && (
+            <div style={{ marginTop: 12 }}>
+              <DeleteQuoteButton quoteId={id} quoteNumber={(quote as any).quote_number} />
+            </div>
           )}
         </div>
 
