@@ -13,7 +13,7 @@ function LoginPageContent() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const redirectTo = searchParams.get("redirect") || "/quotes";
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

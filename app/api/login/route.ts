@@ -11,5 +11,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 401 });
   }
 
-  return NextResponse.json({ success: true, redirectTo: redirectTo || "/quotes" });
+  return NextResponse.json({ success: true, redirectTo: redirectTo || "/dashboard" });
 }
