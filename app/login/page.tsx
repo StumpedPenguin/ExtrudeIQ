@@ -3,8 +3,9 @@
 import * as React from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const searchParams = useSearchParams();
 
   const [email, setEmail] = React.useState("");
@@ -163,5 +164,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
