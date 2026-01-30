@@ -186,6 +186,12 @@ export default function DieEstimatorAdminPage() {
 
           <div className="flex gap-2">
             <Link
+              href="/dashboard"
+              className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-50"
+            >
+              🏠 Home
+            </Link>
+            <Link
               href="/tools/die-estimator"
               className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-50"
             >

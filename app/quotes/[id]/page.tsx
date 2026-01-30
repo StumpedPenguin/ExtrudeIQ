@@ -91,6 +91,9 @@ export default async function QuoteDetailPage({
           </div>
 
           <nav style={{ display: "flex", gap: 14, alignItems: "center" }}>
+            <a href="/dashboard" style={{ color: "white" }}>
+              🏠 Home
+            </a>
             <a href="/quotes" style={{ color: "white" }}>
               Quotes
             </a>

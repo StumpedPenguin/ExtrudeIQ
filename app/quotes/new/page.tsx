@@ -9,10 +9,14 @@ export default async function NewQuotePage() {
   const { data: auth } = await supa.auth.getUser();
   if (!auth.user) {
     return (
-      <main style={{ padding: 24 }}>
-        <p>
-          You are not signed in. Go to <a href="/login">/login</a>.
-        </p>
+      <main className="min-h-screen bg-slate-950 px-4 py-10">
+        <div className="mx-auto flex max-w-6xl items-center justify-center">
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-2xl backdrop-blur text-center">
+            <p className="text-slate-300">
+              You are not signed in. Go to <a href="/login" className="text-indigo-400 hover:text-indigo-300">sign in</a>.
+            </p>
+          </div>
+        </div>
       </main>
     );
   }
@@ -30,44 +34,31 @@ export default async function NewQuotePage() {
     .order("family");
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#f8fafc",
-      }}
-    >
-      {/* Header */}
-      <header
-        style={{
-          background: "linear-gradient(135deg, #1e3a8a, #2563eb)",
-          color: "white",
-          padding: "16px 24px",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22 }}>ExtrudeIQ</h1>
-            <p style={{ margin: 0, fontSize: 13, opacity: 0.85 }}>
-              New Quote
-            </p>
-          </div>
-
-          <nav style={{ display: "flex", gap: 14 }}>
-            <a href="/quotes" style={{ color: "white" }}>Quotes</a>
-            <a href="/quotes/new" style={{ color: "white", fontWeight: 600 }}>
-              New Quote
+    <main className="min-h-screen bg-slate-950 px-4 py-10">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 flex items-baseline justify-between gap-4">
+          <h1 className="text-3xl font-semibold tracking-tight text-white">New Quote</h1>
+          <div className="flex gap-3">
+            <a
+              href="/dashboard"
+              className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-600"
+            >
+              🏠 Home
             </a>
-          </nav>
+            <a
+              href="/quotes"
+              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
+            >
+              Back to Quotes
+            </a>
+          </div>
         </div>
-      </header>
 
-      {/* Content */}
-      <section style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
         <NewQuoteForm
           customers={customers || []}
           materials={materials || []}
         />
-      </section>
+      </div>
     </main>
   );
 }

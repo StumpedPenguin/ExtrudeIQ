@@ -46,6 +46,7 @@ export default async function AdminUsersPage() {
           </div>
 
           <nav style={{ display: "flex", gap: 14 }}>
+            <a href="/dashboard" style={{ color: "white" }}>🏠 Home</a>
             <a href="/quotes" style={{ color: "white" }}>Quotes</a>
             <a href="/quotes/new" style={{ color: "white" }}>New Quote</a>
             <a href="/admin/users" style={{ color: "white", fontWeight: 700 }}>Admin</a>

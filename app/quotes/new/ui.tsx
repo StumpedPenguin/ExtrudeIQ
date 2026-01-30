@@ -90,15 +90,16 @@ export default function NewQuoteForm({
   }
 
   return (
-    <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginTop: 16 }}>
-      <div style={{ border: "1px solid #ddd", padding: 16, borderRadius: 8 }}>
-        <h2>Inputs</h2>
+    <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Inputs Panel */}
+      <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6 shadow-lg">
+        <h2 className="text-xl font-semibold text-white">Inputs</h2>
 
-        <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-          <label>
-            Customer
+        <div className="mt-6 space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-slate-300">Customer</label>
             <select
-              style={{ width: "100%", padding: 8, marginTop: 6 }}
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-200 focus:border-indigo-500 focus:outline-none"
               value={customerId}
               onChange={(e) => setCustomerId(e.target.value)}
             >
@@ -108,12 +109,12 @@ export default function NewQuoteForm({
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label>
-            Material
+          <div>
+            <label className="block text-sm font-medium text-slate-300">Material</label>
             <select
-              style={{ width: "100%", padding: 8, marginTop: 6 }}
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-200 focus:border-indigo-500 focus:outline-none"
               value={materialId}
               onChange={(e) => setMaterialId(e.target.value)}
             >
@@ -124,103 +125,130 @@ export default function NewQuoteForm({
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label>
-            Finished length (in)
+          <div>
+            <label className="block text-sm font-medium text-slate-300">Finished length (in)</label>
             <input
-              style={{ width: "100%", padding: 8, marginTop: 6 }}
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-200 focus:border-indigo-500 focus:outline-none"
               type="number"
               step="0.01"
               value={finishedLen}
               onChange={(e) => setFinishedLen(Number(e.target.value))}
             />
-          </label>
+          </div>
 
-          <label>
-              Base EAU (pcs/year)
-              <input
-                style={{ width: "100%", padding: 8, marginTop: 6 }}
-                type="number"
-                step="1"
-                value={eauBase}
-                onChange={(e) => setEauBase(Number(e.target.value))}
+          <div>
+            <label className="block text-sm font-medium text-slate-300">Base EAU (pcs/year)</label>
+            <input
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-200 focus:border-indigo-500 focus:outline-none"
+              type="number"
+              step="1"
+              value={eauBase}
+              onChange={(e) => setEauBase(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input 
+                type="radio" 
+                checked={mode === "area"} 
+                onChange={() => setMode("area")}
+                className="h-4 w-4 accent-indigo-600"
               />
+              <span className="text-sm text-slate-300">Use cross-section area (in²)</span>
             </label>
 
+            {mode === "area" && (
+              <div>
+                <label className="block text-sm font-medium text-slate-300 ml-7">Area (in²)</label>
+                <input
+                  className="mt-2 ml-7 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  type="number"
+                  step="0.0001"
+                  value={areaIn2}
+                  onChange={(e) => setAreaIn2(Number(e.target.value))}
+                />
+              </div>
+            )}
 
-          <label style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <input type="radio" checked={mode === "area"} onChange={() => setMode("area")} />
-            Use cross-section area (in²)
-          </label>
-
-          {mode === "area" && (
-            <label>
-              Area (in²)
-              <input
-                style={{ width: "100%", padding: 8, marginTop: 6 }}
-                type="number"
-                step="0.0001"
-                value={areaIn2}
-                onChange={(e) => setAreaIn2(Number(e.target.value))}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input 
+                type="radio" 
+                checked={mode === "wpf"} 
+                onChange={() => setMode("wpf")}
+                className="h-4 w-4 accent-indigo-600"
               />
+              <span className="text-sm text-slate-300">Use weight per foot (lb/ft)</span>
             </label>
-          )}
 
-          <label style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <input type="radio" checked={mode === "wpf"} onChange={() => setMode("wpf")} />
-            Use weight per foot (lb/ft)
-          </label>
+            {mode === "wpf" && (
+              <div>
+                <label className="block text-sm font-medium text-slate-300 ml-7">Weight per foot (lb/ft)</label>
+                <input
+                  className="mt-2 ml-7 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  type="number"
+                  step="0.0001"
+                  value={wpf}
+                  onChange={(e) => setWpf(Number(e.target.value))}
+                />
+              </div>
+            )}
+          </div>
 
-          {mode === "wpf" && (
-            <label>
-              Weight per foot (lb/ft)
-              <input
-                style={{ width: "100%", padding: 8, marginTop: 6 }}
-                type="number"
-                step="0.0001"
-                value={wpf}
-                onChange={(e) => setWpf(Number(e.target.value))}
-              />
-            </label>
-          )}
-
-          <button type="button" onClick={onSave} disabled={saving} style={{ padding: 10, marginTop: 6 }}>
+          <button 
+            type="button" 
+            onClick={onSave} 
+            disabled={saving}
+            className="mt-6 w-full rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {saving ? "Saving..." : "Save Quote"}
           </button>
 
-          {msg && <p style={{ color: msg === "Saved." ? "green" : "crimson" }}>{msg}</p>}
+          {msg && (
+            <p className={msg === "Saved." ? "text-green-400" : "text-red-400"}>
+              {msg}
+            </p>
+          )}
 
-{result && (
-  <div style={{ marginTop: 8 }}>
-    <p style={{ margin: 0 }}>
-      Quote created: <b>{result.quote_number}</b>
-    </p>
+          {result && (
+            <div className="mt-4 rounded-lg border border-indigo-800 bg-indigo-950/40 p-4">
+              <p className="text-sm text-slate-300">
+                Quote created: <span className="font-semibold text-indigo-400">{result.quote_number}</span>
+              </p>
 
-    <p style={{ margin: "6px 0 0 0" }}>
-      <a href={`/quotes/${result.quote_id}`} style={{ fontWeight: 600 }}>
-        View quote
-      </a>
-    </p>
+              <p className="mt-3">
+                <a 
+                  href={`/quotes/${result.quote_id}`} 
+                  className="font-semibold text-indigo-400 hover:text-indigo-300"
+                >
+                  View quote →
+                </a>
+              </p>
 
-    <p style={{ margin: "6px 0 0 0", fontSize: 12, opacity: 0.75 }}>
-      ID: {result.quote_id}
-    </p>
-  </div>
-)}
-
+              <p className="mt-2 text-xs text-slate-500">
+                ID: {result.quote_id}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      <div style={{ border: "1px solid #ddd", padding: 16, borderRadius: 8 }}>
-        <h2>Live preview</h2>
-        <p style={{ marginTop: 12 }}>
-          Weight per piece (lb): <b>{weightPreviewLb.toFixed(4)}</b>
-        </p>
-        <p style={{ opacity: 0.75 }}>
-          Material price and per-piece price are calculated on save using the latest effective material price in the
-          database.
-        </p>
+      {/* Preview Panel */}
+      <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6 shadow-lg">
+        <h2 className="text-xl font-semibold text-white">Live Preview</h2>
+        <div className="mt-6 space-y-4">
+          <div className="rounded-lg border border-slate-700 bg-slate-950/50 p-4">
+            <p className="text-sm text-slate-400">Weight per piece</p>
+            <p className="mt-2 text-3xl font-bold text-indigo-400">
+              {weightPreviewLb.toFixed(4)} <span className="text-lg text-slate-400">lb</span>
+            </p>
+          </div>
+          <p className="text-xs leading-relaxed text-slate-500">
+            Material price and per-piece price are calculated on save using the latest effective material price in the database.
+          </p>
+        </div>
       </div>
     </section>
   );

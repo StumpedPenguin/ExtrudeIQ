@@ -57,12 +57,20 @@ export default async function QuotesListPage({
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex items-baseline justify-between gap-4">
           <h1 className="text-3xl font-semibold tracking-tight text-white">Quotes</h1>
-          <a
-            href="/quotes/new"
-            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
-          >
-            New Quote
-          </a>
+          <div className="flex gap-3">
+            <a
+              href="/dashboard"
+              className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-600"
+            >
+              🏠 Home
+            </a>
+            <a
+              href="/quotes/new"
+              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
+            >
+              New Quote
+            </a>
+          </div>
         </div>
 
         <form method="GET" className="mb-6 flex gap-3">
