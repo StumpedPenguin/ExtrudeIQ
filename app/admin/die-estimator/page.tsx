@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { createBrowserClient } from "@/lib/supabase/client";
 
-type Settings = {
+type SettingsRow = {
   id: string;
   a0: number;
   k: number;
@@ -14,9 +14,11 @@ type Settings = {
   base_solid: number;
   base_hollow: number;
   base_coex: number;
-  updated_at: string;
-  updated_by: string | null;
+  updated_at?: string;
+  updated_by?: string | null;
 };
+
+const FIXED_ID = "00000000-0000-0000-0000-000000000001";
 
 function n(v: string): number {
   const x = Number(v);
@@ -25,14 +27,13 @@ function n(v: string): number {
 
 export default function DieEstimatorAdminPage() {
   const supabase = React.useMemo(() => createBrowserClient(), []);
+
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [ok, setOk] = React.useState<string | null>(null);
 
-  const [settingsId, setSettingsId] = React.useState<string | null>(null);
-
-  // Form state (strings so inputs behave)
+  // Form state (strings for inputs)
   const [a0, setA0] = React.useState("0.2");
   const [k, setK] = React.useState("0.4");
   const [cavitySlope, setCavitySlope] = React.useState("0.35");
@@ -49,9 +50,8 @@ export default function DieEstimatorAdminPage() {
 
     const { data, error: e } = await supabase
       .from("die_estimator_settings")
-      .select("*")
-      .order("updated_at", { ascending: false })
-      .limit(1)
+      .select("id,a0,k,cavity_slope,low_band,high_band,base_solid,base_hollow,base_coex,updated_at,updated_by")
+      .eq("id", FIXED_ID)
       .maybeSingle();
 
     if (e) {
@@ -61,14 +61,15 @@ export default function DieEstimatorAdminPage() {
     }
 
     if (!data) {
-      // No row exists; keep defaults, but allow "Save" to create one
-      setSettingsId(null);
+      setError(
+        `No settings row found. Ensure die_estimator_settings contains id ${FIXED_ID} (seed it once in SQL).`
+      );
       setLoading(false);
       return;
     }
 
-    const s = data as Settings;
-    setSettingsId(s.id);
+    const s = data as SettingsRow;
+
     setA0(String(s.a0));
     setK(String(s.k));
     setCavitySlope(String(s.cavity_slope));
@@ -90,45 +91,43 @@ export default function DieEstimatorAdminPage() {
     setError(null);
     setOk(null);
 
-    // Basic validation
+    // Validate
     const a0v = n(a0);
     const kv = n(k);
     const cavv = n(cavitySlope);
     const lowv = n(lowBand);
     const highv = n(highBand);
 
-    if (a0v <= 0) return fail("A0 must be > 0");
-    if (kv <= 0) return fail("K must be > 0");
-    if (cavv < 0) return fail("Cavity slope must be ≥ 0");
-    if (lowv <= 0 || lowv >= 2) return fail("Low band must be between 0 and 2");
-    if (highv <= 0 || highv >= 3) return fail("High band must be between 0 and 3");
-    if (highv <= lowv) return fail("High band must be greater than low band");
+    if (a0v <= 0) return fail("A0 must be > 0.");
+    if (kv <= 0) return fail("K must be > 0.");
+    if (cavv < 0) return fail("Cavity slope must be ≥ 0.");
+    if (lowv <= 0 || lowv >= 2) return fail("Low band must be between 0 and 2.");
+    if (highv <= 0 || highv >= 3) return fail("High band must be between 0 and 3.");
+    if (highv <= lowv) return fail("High band must be greater than low band.");
 
-    const payload = {
-      id: settingsId ?? undefined,
-      a0: a0v,
-      k: kv,
-      cavity_slope: cavv,
-      low_band: lowv,
-      high_band: highv,
-      base_solid: Math.max(0, Math.floor(n(baseSolid))),
-      base_hollow: Math.max(0, Math.floor(n(baseHollow))),
-      base_coex: Math.max(0, Math.floor(n(baseCoex))),
-    };
+    const solid = Math.max(0, Math.floor(n(baseSolid)));
+    const hollow = Math.max(0, Math.floor(n(baseHollow)));
+    const coex = Math.max(0, Math.floor(n(baseCoex)));
 
-    // Track who updated, if you want (optional)
+    // Optional updated_by tracking
     const { data: authData } = await supabase.auth.getUser();
     const userId = authData?.user?.id ?? null;
 
-    const upsertPayload = {
-      ...payload,
-      updated_by: userId,
-    };
-
     const { data, error: e } = await supabase
       .from("die_estimator_settings")
-      .upsert(upsertPayload, { onConflict: "id" })
-      .select("*")
+      .update({
+        a0: a0v,
+        k: kv,
+        cavity_slope: cavv,
+        low_band: lowv,
+        high_band: highv,
+        base_solid: solid,
+        base_hollow: hollow,
+        base_coex: coex,
+        updated_by: userId,
+      })
+      .eq("id", FIXED_ID)
+      .select("id,a0,k,cavity_slope,low_band,high_band,base_solid,base_hollow,base_coex,updated_at,updated_by")
       .single();
 
     if (e) {
@@ -137,8 +136,17 @@ export default function DieEstimatorAdminPage() {
       return;
     }
 
-    const s = data as Settings;
-    setSettingsId(s.id);
+    // Re-sync form to saved values
+    const s = data as SettingsRow;
+    setA0(String(s.a0));
+    setK(String(s.k));
+    setCavitySlope(String(s.cavity_slope));
+    setLowBand(String(s.low_band));
+    setHighBand(String(s.high_band));
+    setBaseSolid(String(s.base_solid));
+    setBaseHollow(String(s.base_hollow));
+    setBaseCoex(String(s.base_coex));
+
     setOk("Settings saved.");
     setSaving(false);
   }
@@ -211,15 +219,18 @@ export default function DieEstimatorAdminPage() {
             ) : (
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="A0 (baseline area in²)" value={a0} onChange={setA0} rightHint="in²" />
-                <Field label="K (area sensitivity)" value={k} onChange={setK} rightHint="" />
+                <Field label="K (area sensitivity)" value={k} onChange={setK} />
 
-                <Field label="Cavity slope" value={cavitySlope} onChange={setCavitySlope} rightHint="" />
+                <Field label="Cavity slope" value={cavitySlope} onChange={setCavitySlope} />
                 <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
                   <div className="text-xs font-semibold uppercase tracking-wide text-indigo-900/80">
-                    Note
+                    Estimator formula
                   </div>
                   <div className="mt-2 text-sm text-indigo-900">
-                    Estimator formula: Base × SizeFactor × CavityMultiplier
+                    Base × SizeFactor × CavityMultiplier
+                  </div>
+                  <div className="mt-1 text-xs text-indigo-900/70">
+                    SizeFactor = 1 + K × max(0, (Area − A0) / A0)
                   </div>
                 </div>
 
@@ -265,11 +276,11 @@ export default function DieEstimatorAdminPage() {
             </div>
           </div>
 
-          {/* Preview / explainer */}
+          {/* Preview */}
           <div className="rounded-2xl border border-indigo-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-indigo-950">Live preview</h2>
+            <h2 className="text-base font-semibold text-indigo-950">Preview</h2>
             <p className="mt-1 text-sm text-indigo-800/80">
-              These values affect how size and cavities scale the die base costs.
+              These values are applied immediately by the estimator page (read-only).
             </p>
 
             <div className="mt-4 space-y-2">
@@ -284,7 +295,7 @@ export default function DieEstimatorAdminPage() {
             </div>
 
             <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-              Make small tuning changes, then validate against a handful of historical dies.
+              If you get RLS errors here, confirm your UPDATE policy matches your admin role schema.
             </div>
           </div>
         </div>
