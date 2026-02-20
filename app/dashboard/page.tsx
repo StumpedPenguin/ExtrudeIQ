@@ -18,7 +18,13 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const userEmail = auth.user.email || "User";
+  const { data: profile } = await supa
+    .from("profiles")
+    .select("name")
+    .eq("id", auth.user.id)
+    .single();
+
+  const userName = profile?.name || "User";
 
   const navButtons: NavButton[] = [
     {
@@ -67,7 +73,7 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white">ExtrudeIQ</h1>
-              <p className="text-slate-400 mt-1">Welcome, {userEmail}</p>
+              <p className="text-slate-400 mt-1">Welcome, {userName}</p>
             </div>
             <LogoutButton />
           </div>

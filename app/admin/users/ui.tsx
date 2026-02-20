@@ -252,7 +252,7 @@ export default function AdminUsersClient() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 220px 240px",
+              gridTemplateColumns: "1fr 220px",
               padding: "10px 12px",
               background: "#f1f5f9",
               fontWeight: 700,
@@ -261,7 +261,6 @@ export default function AdminUsersClient() {
           >
             <div>Email</div>
             <div>Role</div>
-            <div>User ID</div>
           </div>
 
           {filteredUsers.map((u) => {
@@ -273,7 +272,7 @@ export default function AdminUsersClient() {
                 key={u.id}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 220px 240px",
+                  gridTemplateColumns: "1fr 220px",
                   padding: "10px 12px",
                   borderBottom: "1px solid #f1f5f9",
                   alignItems: "center",
@@ -320,8 +319,6 @@ export default function AdminUsersClient() {
                     <span style={{ fontSize: 12, color: "#b91c1c" }}>{st.errorMsg}</span>
                   )}
                 </div>
-
-                <div style={{ fontSize: 12, opacity: 0.75 }}>{u.id}</div>
               </div>
             );
           })}

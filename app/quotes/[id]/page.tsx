@@ -1,5 +1,6 @@
 // app/quotes/[id]/page.tsx
 import { supabaseServer } from "@/lib/supabase/server";
+import { generateEauTiers, buildEauMoqTable } from "@/lib/quotes/pricing";
 import NewRevisionButton from "./NewRevisionButton";
 import DeleteQuoteButton from "./DeleteQuoteButton";
 
@@ -71,8 +72,22 @@ export default async function QuoteDetailPage({
   const materialCost = Number(outputs.material_cost_per_piece);
   const weightLb = Number(outputs.weight_lb_per_piece);
 
-  const tiers = Array.isArray(outputs?.eau_moq_table) ? outputs.eau_moq_table : [];
   const eauBase = Number(outputs?.eau_base || 1000);
+  
+  // Generate tiers: use stored eau_moq_table if available, otherwise generate from eau_base
+  let tiers: any[] = [];
+  if (Array.isArray(outputs?.eau_moq_table) && outputs.eau_moq_table.length > 0) {
+    tiers = outputs.eau_moq_table;
+  } else {
+    // Backward compatibility: generate tiers from eau_base if not in outputs
+    const tierEaus = generateEauTiers(eauBase);
+    tiers = buildEauMoqTable({
+      eau_base: eauBase,
+      tiers: tierEaus,
+      price_base_per_piece: basePrice,
+      material_cost_per_piece: materialCost,
+    });
+  }
 
   return (
     <main style={{ minHeight: "100vh", background: "#f8fafc" }}>
