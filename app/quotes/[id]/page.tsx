@@ -1,6 +1,7 @@
 // app/quotes/[id]/page.tsx
 import { supabaseServer } from "@/lib/supabase/server";
 import { generateEauTiers, buildEauMoqTable } from "@/lib/quotes/pricing";
+import Link from "next/link";
 import NewRevisionButton from "./NewRevisionButton";
 import DeleteQuoteButton from "./DeleteQuoteButton";
 
@@ -20,46 +21,38 @@ export default async function QuoteDetailPage({
   const { data: auth } = await supa.auth.getUser();
   if (!auth.user) {
     return (
-      <main style={{ padding: 24 }}>
-        <p>
-          You are not signed in. Go to <a href="/login">/login</a>.
-        </p>
+      <main className="aurora-bg min-h-screen flex items-center justify-center">
+        <div className="glass-card p-8 text-center">
+          <p className="text-slate-300">You are not signed in. <a href="/login" className="text-aurora-teal hover:underline">Sign in</a>.</p>
+        </div>
       </main>
     );
   }
 
-  // Check if user is admin (for delete button visibility)
-  const { data: userProfile } = await supa
-    .from("profiles")
-    .select("role")
-    .eq("id", auth.user.id)
-    .single();
-
+  const { data: userProfile } = await supa.from("profiles").select("role").eq("id", auth.user.id).single();
   const isAdmin = userProfile?.role === "admin";
 
   const { data: quote, error: qErr } = await supa
     .from("quotes")
-    .select("id, quote_number, status, created_at, customer:customers ( name )")
+    .select("id, quote_number, status, created_at, account_id, opportunity_id, account:accounts ( id, name ), opportunity:opportunities ( id, name )")
     .eq("id", id)
     .single();
 
   if (qErr || !quote) {
     return (
-      <main style={{ padding: 24 }}>
-        <h1>Quote not found</h1>
-        <p>{qErr?.message || "No record returned."}</p>
-        <p>
-          <a href="/quotes">Back to quotes</a>
-        </p>
+      <main className="aurora-bg min-h-screen flex items-center justify-center">
+        <div className="glass-card p-8 text-center">
+          <h1 className="text-xl font-bold text-white mb-2">Quote not found</h1>
+          <p className="text-slate-400 text-sm mb-4">{qErr?.message || "No record returned."}</p>
+          <a href="/quotes" className="text-aurora-teal hover:underline text-sm">Back to quotes</a>
+        </div>
       </main>
     );
   }
 
   const { data: rev, error: rErr } = await supa
     .from("quote_revisions")
-    .select(
-      "revision_number, outputs_json, inputs_json, material_price_used, multiplier_used, created_at"
-    )
+    .select("revision_number, outputs_json, inputs_json, material_price_used, multiplier_used, created_at")
     .eq("quote_id", id)
     .eq("is_current", true)
     .order("revision_number", { ascending: false })
@@ -67,19 +60,15 @@ export default async function QuoteDetailPage({
     .maybeSingle();
 
   const outputs = (rev?.outputs_json || {}) as any;
-
   const basePrice = Number(outputs.base_price_per_piece ?? outputs.sell_price_per_piece);
   const materialCost = Number(outputs.material_cost_per_piece);
   const weightLb = Number(outputs.weight_lb_per_piece);
-
   const eauBase = Number(outputs?.eau_base || 1000);
-  
-  // Generate tiers: use stored eau_moq_table if available, otherwise generate from eau_base
+
   let tiers: any[] = [];
   if (Array.isArray(outputs?.eau_moq_table) && outputs.eau_moq_table.length > 0) {
     tiers = outputs.eau_moq_table;
   } else {
-    // Backward compatibility: generate tiers from eau_base if not in outputs
     const tierEaus = generateEauTiers(eauBase);
     tiers = buildEauMoqTable({
       eau_base: eauBase,
@@ -90,173 +79,116 @@ export default async function QuoteDetailPage({
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: "#f8fafc" }}>
+    <main className="aurora-bg min-h-screen">
       {/* Header */}
-      <header
-        style={{
-          background: "linear-gradient(135deg, #1e3a8a, #2563eb)",
-          color: "white",
-          padding: "16px 24px",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22 }}>ExtrudeIQ</h1>
-            <p style={{ margin: 0, fontSize: 13, opacity: 0.85 }}>Quote Detail</p>
+      <header className="border-b border-white/[0.06] bg-[#060918]/60 backdrop-blur-xl">
+        <div className="mx-auto max-w-6xl px-8 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-aurora-teal to-aurora-cyan flex items-center justify-center text-[#060918] font-bold text-sm">E</div>
+              <div>
+                <h1 className="text-xl font-bold text-white tracking-tight">Quote Detail</h1>
+              </div>
+            </div>
+            <nav className="flex items-center gap-3">
+              <Link href="/dashboard" className="aurora-btn-secondary px-4 py-2 text-xs">Home</Link>
+              <Link href="/quotes" className="aurora-btn-secondary px-4 py-2 text-xs">Quotes</Link>
+              <Link href="/quotes/new" className="aurora-btn-secondary px-4 py-2 text-xs">New Quote</Link>
+              <NewRevisionButton quoteId={id} />
+            </nav>
           </div>
-
-          <nav style={{ display: "flex", gap: 14, alignItems: "center" }}>
-            <a href="/dashboard" style={{ color: "white" }}>
-              🏠 Home
-            </a>
-            <a href="/quotes" style={{ color: "white" }}>
-              Quotes
-            </a>
-            <a href="/quotes/new" style={{ color: "white" }}>
-              New Quote
-            </a>
-            <NewRevisionButton quoteId={id} />
-          </nav>
         </div>
       </header>
 
       {/* Content */}
-      <section style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ marginBottom: 20 }}>
-          <h2 style={{ margin: 0 }}>{(quote as any).quote_number}</h2>
-          <p style={{ marginTop: 6, opacity: 0.8 }}>
-            Customer: <b>{(quote as any).customer?.name}</b> · Status:{" "}
-            <b>{(quote as any).status}</b>
+      <section className="mx-auto max-w-6xl px-8 py-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-white">{(quote as any).quote_number}</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Account:{" "}
+            <Link href={`/admin/crm/accounts/${(quote as any).account_id}`} className="font-semibold text-aurora-teal hover:underline">
+              {(quote as any).account?.name || "\u2014"}
+            </Link>
+            {(quote as any).opportunity?.name && (
+              <>
+                {" "}\u00b7 Opportunity:{" "}
+                <Link href={`/admin/crm/opportunities/${(quote as any).opportunity_id}`} className="font-semibold text-aurora-teal hover:underline">
+                  {(quote as any).opportunity.name}
+                </Link>
+              </>
+            )}
+            {" "}\u00b7 Status: <span className="font-semibold text-white">{(quote as any).status}</span>
           </p>
-          <p style={{ marginTop: 6, opacity: 0.75, fontSize: 12 }}>
-            Current revision: <b>{rev ? `#${rev.revision_number}` : "—"}</b>
-            {rev?.created_at ? ` · Calculated ${new Date(rev.created_at).toLocaleString()}` : ""}
+          <p className="mt-2 text-xs text-slate-500">
+            Current revision: <span className="font-semibold text-white">{rev ? `#${rev.revision_number}` : "\u2014"}</span>
+            {rev?.created_at ? ` \u00b7 Calculated ${new Date(rev.created_at).toLocaleString()}` : ""}
           </p>
-          {rErr && (
-            <p style={{ marginTop: 8, color: "crimson", fontSize: 12 }}>
-              Revision load warning: {rErr.message}
-            </p>
-          )}
-
-          {/* Admin delete button */}
+          {rErr && <p className="mt-2 text-xs text-red-400">Revision load warning: {rErr.message}</p>}
           {isAdmin && (
-            <div style={{ marginTop: 12 }}>
+            <div className="mt-4">
               <DeleteQuoteButton quoteId={id} quoteNumber={(quote as any).quote_number} />
             </div>
           )}
         </div>
 
         {/* Summary cards */}
-        <section style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-          <div
-            style={{
-              background: "white",
-              borderRadius: 10,
-              padding: 16,
-              boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Base Price / pc</h3>
-            <div style={{ fontSize: 30, fontWeight: 700 }}>{money(basePrice)}</div>
-            <p style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-              Base EAU: {Number(eauBase).toLocaleString()}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          <div className="glass-card glow-teal p-5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Base Price / pc</h3>
+            <div className="text-2xl font-bold text-aurora-teal">{money(basePrice)}</div>
+            <p className="mt-2 text-xs text-slate-500">Base EAU: {Number(eauBase).toLocaleString()}</p>
+          </div>
+          <div className="glass-card glow-violet p-5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Material Cost / pc</h3>
+            <div className="text-xl font-bold text-aurora-violet">{money(materialCost)}</div>
+            <p className="text-xs text-slate-500 mt-2">
+              Price used: {money(Number(rev?.material_price_used))} / lb \u00b7 Multiplier: {rev ? Number(rev.multiplier_used).toFixed(4) : "\u2014"}
             </p>
           </div>
-
-          <div
-            style={{
-              background: "white",
-              borderRadius: 10,
-              padding: 16,
-              boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Material Cost / pc</h3>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>{money(materialCost)}</div>
-            <p style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>
-              Price used: {money(Number(rev?.material_price_used))} / lb · Multiplier:{" "}
-              {rev ? Number(rev.multiplier_used).toFixed(4) : "—"}
-            </p>
-          </div>
-
-          <div
-            style={{
-              background: "white",
-              borderRadius: 10,
-              padding: 16,
-              boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Weight / pc</h3>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>
-              {Number.isFinite(weightLb) ? weightLb.toFixed(4) : "—"} lb
+          <div className="glass-card glow-blue p-5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Weight / pc</h3>
+            <div className="text-xl font-bold text-aurora-blue">
+              {Number.isFinite(weightLb) ? weightLb.toFixed(4) : "\u2014"} lb
             </div>
           </div>
-        </section>
+        </div>
 
         {/* EAU + MOQ table */}
-        <section style={{ marginTop: 20 }}>
-          <h3 style={{ margin: "0 0 10px 0" }}>EAU Pricing & MOQ</h3>
+        <div>
+          <h3 className="text-lg font-bold text-white mb-4">EAU Pricing & MOQ</h3>
 
-          <div
-            style={{
-              background: "white",
-              borderRadius: 10,
-              overflow: "hidden",
-              boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "140px 160px 120px 140px 1fr",
-                padding: "10px 12px",
-                background: "#f1f5f9",
-                fontWeight: 700,
-                borderBottom: "1px solid #e5e7eb",
-              }}
-            >
-              <div>EAU</div>
-              <div>Price / pc</div>
-              <div>Discount</div>
-              <div>MOQ</div>
-              <div>Notes</div>
-            </div>
-
-            {tiers.map((t: any) => (
-              <div
-                key={t.eau}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "140px 160px 120px 140px 1fr",
-                  padding: "10px 12px",
-                  borderBottom: "1px solid #f1f5f9",
-                  alignItems: "center",
-                  fontSize: 14,
-                }}
-              >
-                <div>{Number(t.eau).toLocaleString()}</div>
-                <div style={{ fontWeight: 600 }}>
-                  {money(Number(t.price_per_piece))}
-                </div>
-                <div style={{ opacity: 0.85 }}>
-                  {Number(t.discount_pct).toFixed(2)}%
-                </div>
-                <div>{Number(t.moq_pieces).toLocaleString()}</div>
-                <div style={{ fontSize: 12, opacity: 0.8 }}>{t.notes || ""}</div>
-              </div>
-            ))}
-
-            {tiers.length === 0 && (
-              <div style={{ padding: 12, opacity: 0.8 }}>No EAU tiers available.</div>
-            )}
+          <div className="glass-card overflow-hidden">
+            <table className="aurora-table">
+              <thead>
+                <tr>
+                  <th>EAU</th>
+                  <th>Price / pc</th>
+                  <th>Discount</th>
+                  <th>MOQ</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tiers.map((t: any) => (
+                  <tr key={t.eau}>
+                    <td className="font-medium text-white">{Number(t.eau).toLocaleString()}</td>
+                    <td className="font-semibold text-aurora-teal">{money(Number(t.price_per_piece))}</td>
+                    <td>{Number(t.discount_pct).toFixed(2)}%</td>
+                    <td>{Number(t.moq_pieces).toLocaleString()}</td>
+                    <td className="text-xs text-slate-500">{t.notes || ""}</td>
+                  </tr>
+                ))}
+                {tiers.length === 0 && (
+                  <tr><td colSpan={5} className="text-center py-8 text-slate-500">No EAU tiers available.</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
-          <p style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-            Tier pricing is capped so it does not increase above the base price. Discounts are limited to a
-            maximum of 15%. MOQ is calculated per tier to recover setup + minimum gross profit.
+          <p className="mt-3 text-xs text-slate-500">
+            Tier pricing is capped so it does not increase above the base price. Discounts are limited to a maximum of 15%. MOQ is calculated per tier to recover setup + minimum gross profit.
           </p>
-        </section>
+        </div>
       </section>
     </main>
   );

@@ -3,7 +3,7 @@
 import { supabaseServer } from "@/lib/supabase/server";
 
 type NewQuoteInput = {
-  customer_id: string;
+  account_id: string;
   material_id: string;
   finished_length_in: number;
   area_in2?: number | null;
@@ -43,7 +43,7 @@ export async function createNewQuote(input: NewQuoteInput) {
 
   // Basic validation
   const finishedLen = Number(input.finished_length_in);
-  if (!input.customer_id) throw new Error("Customer is required");
+  if (!input.account_id) throw new Error("Account is required");
   if (!input.material_id) throw new Error("Material is required");
   if (!Number.isFinite(finishedLen) || finishedLen <= 0) throw new Error("Finished length must be > 0");
 
@@ -100,7 +100,7 @@ export async function createNewQuote(input: NewQuoteInput) {
       .from("quotes")
       .insert({
         quote_number: quoteNumber,
-        customer_id: input.customer_id,
+        account_id: input.account_id,
         status: "draft",
         created_by: userId,
       })
@@ -122,7 +122,7 @@ export async function createNewQuote(input: NewQuoteInput) {
   if (!quoteId || !quoteNumber) throw new Error("Could not generate unique quote number");
 
   const inputs_json = {
-    customer_id: input.customer_id,
+    account_id: input.account_id,
     material_id: input.material_id,
     finished_length_in: finishedLen,
     area_in2: area > 0 ? area : null,

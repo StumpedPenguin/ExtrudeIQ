@@ -14,7 +14,6 @@ export default function NewRevisionButton({ quoteId }: { quoteId: string }) {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data?.error || "Failed to create revision");
       setMsg(`Revision ${data.revision_number} created.`);
-      // reload to show the new current revision
       window.location.reload();
     } catch (e: any) {
       setMsg(e?.message || "Error");
@@ -23,11 +22,11 @@ export default function NewRevisionButton({ quoteId }: { quoteId: string }) {
   }
 
   return (
-    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-      <button type="button" onClick={run} disabled={loading} style={{ padding: "8px 12px" }}>
+    <div className="flex gap-2 items-center">
+      <button type="button" onClick={run} disabled={loading} className="aurora-btn px-4 py-2 text-xs">
         {loading ? "Creating..." : "New Revision"}
       </button>
-      {msg && <span style={{ fontSize: 12, opacity: 0.8 }}>{msg}</span>}
+      {msg && <span className="text-xs text-slate-400">{msg}</span>}
     </div>
   );
 }

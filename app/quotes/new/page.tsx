@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase/server";
+import Link from "next/link";
 import NewQuoteForm from "./ui";
 
 export const runtime = "nodejs";
@@ -9,23 +10,13 @@ export default async function NewQuotePage() {
   const { data: auth } = await supa.auth.getUser();
   if (!auth.user) {
     return (
-      <main className="min-h-screen bg-slate-950 px-4 py-10">
-        <div className="mx-auto flex max-w-6xl items-center justify-center">
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-2xl backdrop-blur text-center">
-            <p className="text-slate-300">
-              You are not signed in. Go to <a href="/login" className="text-indigo-400 hover:text-indigo-300">sign in</a>.
-            </p>
-          </div>
+      <main className="aurora-bg min-h-screen flex items-center justify-center">
+        <div className="glass-card p-8 text-center">
+          <p className="text-slate-300">You are not signed in. <a href="/login" className="text-aurora-teal hover:underline">Sign in</a>.</p>
         </div>
       </main>
     );
   }
-
-  const { data: customers } = await supa
-    .from("customers")
-    .select("id, name, status")
-    .eq("status", "active")
-    .order("name");
 
   const { data: materials } = await supa
     .from("materials")
@@ -33,30 +24,40 @@ export default async function NewQuotePage() {
     .eq("active", true)
     .order("family");
 
+  const { data: accounts } = await supa
+    .from("accounts")
+    .select("id, name, type")
+    .eq("status", "active")
+    .order("name");
+
+  const { data: opportunities } = await supa
+    .from("opportunities")
+    .select("id, name, account_id, status")
+    .not("status", "in", "(won,lost)")
+    .order("name");
+
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-10">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-baseline justify-between gap-4">
-          <h1 className="text-3xl font-semibold tracking-tight text-white">New Quote</h1>
-          <div className="flex gap-3">
-            <a
-              href="/dashboard"
-              className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-600"
-            >
-              🏠 Home
-            </a>
-            <a
-              href="/quotes"
-              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
-            >
-              Back to Quotes
-            </a>
+    <main className="aurora-bg min-h-screen">
+      <header className="border-b border-white/[0.06] bg-[#060918]/60 backdrop-blur-xl">
+        <div className="mx-auto max-w-6xl px-8 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-aurora-teal to-aurora-cyan flex items-center justify-center text-[#060918] font-bold text-sm">E</div>
+              <h1 className="text-xl font-bold text-white tracking-tight">New Quote</h1>
+            </div>
+            <div className="flex gap-3">
+              <Link href="/dashboard" className="aurora-btn-secondary px-4 py-2 text-xs">Home</Link>
+              <Link href="/quotes" className="aurora-btn-secondary px-4 py-2 text-xs">Back to Quotes</Link>
+            </div>
           </div>
         </div>
+      </header>
 
+      <div className="mx-auto max-w-6xl px-8 py-8">
         <NewQuoteForm
-          customers={customers || []}
           materials={materials || []}
+          accounts={accounts || []}
+          opportunities={opportunities || []}
         />
       </div>
     </main>

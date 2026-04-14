@@ -1,16 +1,16 @@
 // lib/quotes/createQuote.ts
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildEauMoqTable, generateEauTiers } from "@/lib/quotes/pricing";
+import { logActivity } from "@/lib/crm/activities";
 
 export type NewQuoteInput = {
-  customer_id: string;
+  account_id: string;
   material_id: string;
   finished_length_in: number;
   area_in2?: number | null;
   weight_lb_per_ft?: number | null;
-
-  // NEW
-  eau_base?: number | null; // estimator-entered base EAU (pcs/year)
+  eau_base?: number | null;
+  opportunity_id?: string | null;
 };
 
 export type CreateQuoteResult = {
@@ -40,7 +40,7 @@ export async function createQuote(
   const area = input.area_in2 ? Number(input.area_in2) : 0;
   const wpf = input.weight_lb_per_ft ? Number(input.weight_lb_per_ft) : 0;
 
-  if (!input.customer_id) throw new Error("Customer is required");
+  if (!input.account_id) throw new Error("Account is required");
   if (!input.material_id) throw new Error("Material is required");
   if (!Number.isFinite(finishedLen) || finishedLen <= 0) {
     throw new Error("Finished length must be > 0");
@@ -130,7 +130,8 @@ export async function createQuote(
       .from("quotes")
       .insert({
         quote_number: quoteNumber,
-        customer_id: input.customer_id,
+        account_id: input.account_id,
+        opportunity_id: input.opportunity_id || null,
         status: "draft",
         created_by: userId,
       })
@@ -151,7 +152,7 @@ export async function createQuote(
   if (!quoteId || !quoteNumber) throw new Error("Could not generate unique quote number");
 
   const inputs_json = {
-    customer_id: input.customer_id,
+    account_id: input.account_id,
     material_id: input.material_id,
     finished_length_in: finishedLen,
     area_in2: area > 0 ? area : null,
@@ -200,6 +201,19 @@ export async function createQuote(
   });
 
   if (rErr) throw new Error(rErr.message);
+
+  // Log activity
+  await logActivity(supa, {
+    account_id: input.account_id,
+    opportunity_id: input.opportunity_id || null,
+    quote_id: quoteId,
+    activity_type: "quote_created",
+    title: `Quote ${quoteNumber} created`,
+    description: input.opportunity_id
+      ? `Quote linked to opportunity`
+      : null,
+    created_by: userId,
+  });
 
   return { quote_id: quoteId, quote_number: quoteNumber };
 }
