@@ -20,11 +20,11 @@ export default async function AdminDashboardPage() {
 
   const { data: profile } = await supa
     .from("profiles")
-    .select("name")
+    .select("full_name")
     .eq("id", auth.user.id)
     .single();
 
-  const userName = profile?.name || "User";
+  const userName = profile?.full_name || "User";
 
   const navButtons: NavButton[] = [
     { label: "Die Estimator", href: "/tools/die-estimator", description: "Estimate die costs", icon: "⚙️" },

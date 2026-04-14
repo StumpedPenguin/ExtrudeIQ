@@ -44,11 +44,27 @@ export async function POST(req: Request) {
     }
 
     const admin = supabaseAdmin();
+    const fullName = `${firstName} ${lastName}`.trim();
+    const metadata = {
+      full_name: fullName,
+      first_name: firstName,
+      last_name: lastName,
+      role,
+    };
 
-    // Invite user
-    const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email);
+    // Create the auth user through Supabase Auth and attach the profile metadata
+    const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
+      data: metadata,
+    });
     if (inviteErr) {
-      return NextResponse.json({ error: inviteErr.message }, { status: 400 });
+      const message = inviteErr.message || "Failed to create user";
+      if (/database error saving new user/i.test(message)) {
+        return NextResponse.json(
+          { error: "Supabase Auth could not create the user profile. Apply the latest profiles migration and try again." },
+          { status: 500 }
+        );
+      }
+      return NextResponse.json({ error: message }, { status: 400 });
     }
 
     const invitedId = invited.user?.id;
@@ -57,8 +73,7 @@ export async function POST(req: Request) {
     }
 
     // Ensure profile row exists + role assigned
-    // If the user already had a profile, update it; otherwise insert.
-    const fullName = `${firstName} ${lastName}`;
+    // If the auth trigger has not populated the row yet, this keeps the app in sync.
     const { error: upsertErr } = await admin
       .from("profiles")
       .upsert(
@@ -88,7 +103,8 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "Unexpected error" }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Unexpected error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

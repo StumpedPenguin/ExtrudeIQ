@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Role = "admin" | "estimator" | "viewer";
 type ProfileRow = { id: string; email: string | null; full_name: string | null; role: Role; created_at?: string; updated_at?: string; };
+type ApiUser = { id: string; email?: string | null; full_name?: string | null; role?: string | null; created_at?: string; updated_at?: string; };
 type RowState = { roleDraft: Role; saving: boolean; savedMsg: string | null; errorMsg: string | null; };
 
-function isRole(x: any): x is Role { return x === "admin" || x === "estimator" || x === "viewer"; }
+function isRole(x: unknown): x is Role { return x === "admin" || x === "estimator" || x === "viewer"; }
 
 export default function AdminUsersClient() {
   const [email, setEmail] = useState("");
@@ -32,26 +33,37 @@ export default function AdminUsersClient() {
     setRowState(next);
   }
 
-  async function loadUsers() {
+  const loadUsers = useCallback(async () => {
     setLoadingUsers(true); setMsg(null);
     try {
-      const resp = await fetch("/api/admin/users"); const data = await resp.json();
+      const resp = await fetch("/api/admin/users");
+      const data = await resp.json();
       if (!resp.ok) throw new Error(data?.error || "Failed to load users");
-      const rows: ProfileRow[] = (data.users || []).map((u: any) => ({ id: String(u.id), email: u.email ?? null, full_name: u.full_name ?? null, role: isRole(u.role) ? u.role : "viewer", created_at: u.created_at, updated_at: u.updated_at }));
+      const rows: ProfileRow[] = (data.users || []).map((u: ApiUser) => ({
+        id: String(u.id),
+        email: u.email ?? null,
+        full_name: u.full_name ?? null,
+        role: isRole(u.role) ? u.role : "viewer",
+        created_at: u.created_at,
+        updated_at: u.updated_at,
+      }));
       setUsers(rows); initRowState(rows);
-    } catch (e: any) { setMsg(e?.message || "Failed to load users"); }
-    finally { setLoadingUsers(false); }
-  }
+    } catch (e: unknown) {
+      setMsg(e instanceof Error ? e.message : "Failed to load users");
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
 
-  useEffect(() => { loadUsers(); }, []);
+  useEffect(() => { loadUsers(); }, [loadUsers]);
 
   async function invite() {
     setInviting(true); setMsg(null);
     try {
       const resp = await fetch("/api/admin/invite", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, first_name: firstName, last_name: lastName, role: inviteRole }) });
       const data = await resp.json(); if (!resp.ok) throw new Error(data?.error || "Invite failed");
-      setMsg(`Invited ${data.email} as ${data.role}.`); setEmail(""); setFirstName(""); setLastName(""); await loadUsers();
-    } catch (e: any) { setMsg(e?.message || "Invite failed"); }
+      setMsg(`Created ${data.email} as ${data.role}.`); setEmail(""); setFirstName(""); setLastName(""); await loadUsers();
+    } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Create user failed"); }
     finally { setInviting(false); }
   }
 
@@ -66,24 +78,22 @@ export default function AdminUsersClient() {
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: state.roleDraft } : u)));
       setRow(userId, { saving: false, savedMsg: "Saved.", errorMsg: null });
       setTimeout(() => setRow(userId, { savedMsg: null }), 1500);
-    } catch (e: any) { setRow(userId, { saving: false, errorMsg: e?.message || "Error", savedMsg: null }); }
+    } catch (e: unknown) { setRow(userId, { saving: false, errorMsg: e instanceof Error ? e.message : "Error", savedMsg: null }); }
   }
-
-  const roleBadge: Record<string, string> = { admin: "bg-aurora-violet/20 text-aurora-violet", estimator: "bg-aurora-teal/20 text-aurora-teal", viewer: "bg-slate-500/20 text-slate-400" };
 
   return (
     <div className="space-y-6">
       {/* Invite card */}
       <div className="glass-card p-6">
-        <h2 className="text-lg font-bold text-white mb-5">Invite User</h2>
+        <h2 className="text-lg font-bold text-white mb-5">Create User</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
           <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">First Name</label><input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" className="aurora-input" /></div>
           <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Last Name</label><input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Smith" className="aurora-input" /></div>
           <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Email</label><input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" className="aurora-input" /></div>
           <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Role</label><select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as Role)} className="aurora-select"><option value="admin">admin</option><option value="estimator">estimator</option><option value="viewer">viewer</option></select></div>
-          <div className="flex items-end"><button type="button" onClick={invite} disabled={inviting || !email.trim() || !firstName.trim() || !lastName.trim()} className="aurora-btn w-full px-4 py-2.5 text-sm">{inviting ? "Inviting..." : "Send Invite"}</button></div>
+          <div className="flex items-end"><button type="button" onClick={invite} disabled={inviting || !email.trim() || !firstName.trim() || !lastName.trim()} className="aurora-btn w-full px-4 py-2.5 text-sm">{inviting ? "Creating..." : "Create User"}</button></div>
         </div>
-        {msg && <p className={`mt-3 text-xs ${msg.startsWith("Invited") ? "text-emerald-400" : "text-red-400"}`}>{msg}</p>}
+        {msg && <p className={`mt-3 text-xs ${msg.includes("as") || msg.startsWith("Created") || msg.startsWith("Invited") ? "text-emerald-400" : "text-red-400"}`}>{msg}</p>}
       </div>
 
       {/* Users list */}
