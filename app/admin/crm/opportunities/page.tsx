@@ -73,7 +73,6 @@ export default function OpportunitiesPage() {
               <h1 className="text-xl font-bold text-white tracking-tight">Opportunities</h1>
             </div>
             <div className="flex gap-3">
-              <Link href="/dashboard" className="aurora-btn-secondary px-4 py-2 text-xs">Home</Link>
               <Link href="/admin/crm/opportunities/new" className="aurora-btn px-4 py-2 text-xs">+ New Opportunity</Link>
             </div>
           </div>

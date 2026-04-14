@@ -167,6 +167,7 @@ CREATE TABLE leads (
   company_name TEXT NOT NULL,
   industry TEXT,
   website TEXT,
+  description TEXT,
   
   -- Lead Source & Status Tracking
   lead_source TEXT, -- 'website', 'referral', 'inbound', 'outbound', 'event', etc.

@@ -184,7 +184,6 @@ export default function AccountDetailPage() {
             <div className="glass-card p-6">
               <div className="flex justify-between items-center mb-5">
                 <h2 className="text-lg font-bold text-white">Quotes</h2>
-                <Link href="/quotes/new" className="aurora-btn px-3 py-1.5 text-xs">+ New Quote</Link>
               </div>
               {quotes.length === 0 ? <div className="text-center py-8 text-slate-500 text-sm">No quotes yet</div> : (
                 <div className="space-y-2">

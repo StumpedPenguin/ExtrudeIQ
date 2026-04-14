@@ -30,12 +30,17 @@ export async function POST(req: Request) {
     const body = await req.json();
     const email = String(body.email || "").trim().toLowerCase();
     const role = String(body.role || "estimator").trim();
+    const firstName = String(body.first_name || "").trim();
+    const lastName = String(body.last_name || "").trim();
 
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
     }
     if (!["admin", "estimator", "viewer"].includes(role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+    if (!firstName || !lastName) {
+      return NextResponse.json({ error: "First name and last name are required" }, { status: 400 });
     }
 
     const admin = supabaseAdmin();
@@ -53,6 +58,7 @@ export async function POST(req: Request) {
 
     // Ensure profile row exists + role assigned
     // If the user already had a profile, update it; otherwise insert.
+    const fullName = `${firstName} ${lastName}`;
     const { error: upsertErr } = await admin
       .from("profiles")
       .upsert(
@@ -60,6 +66,7 @@ export async function POST(req: Request) {
           id: invitedId,
           role,
           email,
+          full_name: fullName,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "id" }

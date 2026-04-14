@@ -76,7 +76,6 @@ export default function AccountsPage() {
               <h1 className="text-xl font-bold text-white tracking-tight">Accounts</h1>
             </div>
             <div className="flex gap-3">
-              <Link href="/dashboard" className="aurora-btn-secondary px-4 py-2 text-xs">Home</Link>
               <button onClick={() => setShowForm(true)} className="aurora-btn px-4 py-2 text-xs">+ New Account</button>
             </div>
           </div>
@@ -121,29 +120,47 @@ export default function AccountsPage() {
           </div>
         )}
 
-        {/* Accounts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Accounts List */}
+        <div className="glass-card overflow-hidden">
           {loading ? (
-            <div className="col-span-full text-center py-12 text-slate-500">Loading accounts...</div>
+            <div className="text-center py-12 text-slate-500">Loading accounts...</div>
           ) : accounts.length === 0 ? (
-            <div className="col-span-full text-center py-12 text-slate-500">No accounts found</div>
+            <div className="text-center py-12 text-slate-500">No accounts found</div>
           ) : (
-            accounts.map((account) => (
-              <div key={account.id} className="glass-card p-5 cursor-pointer transition-all duration-300 hover:border-aurora-teal/20 hover:shadow-[0_0_24px_rgba(0,212,170,0.06)]"
-                onClick={() => router.push(`/admin/crm/accounts/${account.id}`)}>
-                <div className="mb-3">
-                  <h3 className="text-base font-semibold text-white">{account.name}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">{account.industry || '-'}</p>
-                </div>
-                <div className="space-y-1.5 text-sm mb-4">
-                  <div className="flex justify-between"><span className="text-slate-500">Type:</span><span className="font-medium text-slate-300 capitalize">{account.type}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Status:</span><span className={`font-medium ${account.status === 'active' ? 'text-aurora-teal' : 'text-red-400'}`}>{account.status}</span></div>
-                  {account.phone && <div className="flex justify-between"><span className="text-slate-500">Phone:</span><span className="font-medium text-slate-300">{account.phone}</span></div>}
-                </div>
-                <button onClick={(e) => { e.stopPropagation(); handleDeleteAccount(account.id); }}
-                  className="w-full text-xs text-red-400 hover:text-red-300 font-semibold py-2 rounded-lg border border-red-500/20 hover:bg-red-500/10 transition-colors">Delete</button>
-              </div>
-            ))
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/[0.06]">
+                    <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Name</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Industry</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Type</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Status</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Phone</th>
+                    <th className="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accounts.map((account, i) => (
+                    <tr key={account.id}
+                      className={`border-b border-white/[0.03] hover:bg-white/[0.03] transition-colors cursor-pointer ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
+                      onClick={() => router.push(`/admin/crm/accounts/${account.id}`)}
+                    >
+                      <td className="px-6 py-3.5 text-sm font-medium text-white">{account.name}</td>
+                      <td className="px-6 py-3.5 text-sm text-slate-400">{account.industry || '—'}</td>
+                      <td className="px-6 py-3.5 text-sm text-slate-300 capitalize">{account.type}</td>
+                      <td className="px-6 py-3.5 text-sm">
+                        <span className={`font-medium ${account.status === 'active' ? 'text-aurora-teal' : 'text-red-400'}`}>{account.status}</span>
+                      </td>
+                      <td className="px-6 py-3.5 text-sm text-slate-300">{account.phone || '—'}</td>
+                      <td className="px-6 py-3.5 text-right">
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteAccount(account.id); }}
+                          className="text-xs text-red-400 hover:text-red-300 font-semibold px-3 py-1 rounded border border-red-500/20 hover:bg-red-500/10 transition-colors">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

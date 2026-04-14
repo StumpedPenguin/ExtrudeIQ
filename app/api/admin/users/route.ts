@@ -24,7 +24,7 @@ export async function GET() {
 
     const { data: users, error } = await supa
       .from("profiles")
-      .select("id, email, name, role, created_at, updated_at")
+      .select("id, email, full_name, role, created_at, updated_at")
       .order("created_at", { ascending: false })
       .limit(200);
 

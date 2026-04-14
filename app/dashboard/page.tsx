@@ -29,25 +29,18 @@ export default async function DashboardPage() {
 
   const navButtons: NavButton[] = [
     {
-      label: "New Quote",
-      href: "/quotes/new",
-      description: "Create a new quote",
-      icon: "📝",
-      gradient: "from-aurora-teal/20 to-aurora-cyan/10",
-    },
-    {
-      label: "Quote List",
-      href: "/quotes",
-      description: "View all quotes",
-      icon: "📋",
-      gradient: "from-aurora-blue/20 to-aurora-cyan/10",
-    },
-    {
       label: "Leads",
       href: "/admin/crm/leads",
       description: "Manage sales leads",
       icon: "🎯",
       gradient: "from-aurora-violet/20 to-aurora-blue/10",
+    },
+    {
+      label: "Opportunities",
+      href: "/admin/crm/opportunities",
+      description: "View all opportunities",
+      icon: "🎲",
+      gradient: "from-amber-500/15 to-aurora-teal/10",
     },
     {
       label: "Accounts",
@@ -64,11 +57,18 @@ export default async function DashboardPage() {
       gradient: "from-emerald-500/20 to-aurora-teal/10",
     },
     {
-      label: "Opportunities",
-      href: "/admin/crm/opportunities",
-      description: "View all opportunities",
-      icon: "🎲",
-      gradient: "from-amber-500/15 to-aurora-teal/10",
+      label: "New Quote",
+      href: "/quotes/new",
+      description: "Create a new quote",
+      icon: "📝",
+      gradient: "from-aurora-teal/20 to-aurora-cyan/10",
+    },
+    {
+      label: "Quote List",
+      href: "/quotes",
+      description: "View all quotes",
+      icon: "📋",
+      gradient: "from-aurora-blue/20 to-aurora-cyan/10",
     },
     {
       label: "Admin Dashboard",
@@ -94,7 +94,9 @@ export default async function DashboardPage() {
                 <p className="text-xs text-slate-400">Welcome, {userName}</p>
               </div>
             </div>
-            <LogoutButton />
+            <div className="flex gap-3">
+              <LogoutButton />
+            </div>
           </div>
         </div>
       </header>

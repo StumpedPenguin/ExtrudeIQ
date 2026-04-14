@@ -19,7 +19,7 @@ export async function GET(
     const { data: opportunity, error } = await client
       .from('opportunities')
       .select(
-        'id, name, status, estimated_value, probability_percent, expected_close_date, description, account_id, accounts(id, name), created_at, updated_at'
+        'id, name, status, estimated_value, probability_percent, expected_close_date, description, account_id, contact_id, account_owner_id, accounts(id, name), created_at, updated_at'
       )
       .eq('id', id)
       .eq('created_by', authData.user.id)
@@ -45,15 +45,24 @@ export async function GET(
 
     // Map account data
     const accounts_data = opportunity.accounts as any;
-    const account_name = Array.isArray(accounts_data)
-      ? accounts_data[0]?.name
-      : accounts_data?.name;
+    const account_obj = Array.isArray(accounts_data) ? accounts_data[0] : accounts_data;
     const mappedOpportunity = {
       ...opportunity,
-      account_name: account_name || '',
+      account_name: account_obj?.name || '',
+      account: account_obj ? { id: account_obj.id, name: account_obj.name } : null,
     };
 
-    return NextResponse.json({ opportunity: mappedOpportunity });
+    // Fetch contacts for the account if account_id exists
+    let contacts: any[] = [];
+    if (opportunity.account_id) {
+      const { data: contactData } = await client
+        .from('contacts')
+        .select('id, first_name, last_name, email, title')
+        .eq('account_id', opportunity.account_id);
+      contacts = contactData || [];
+    }
+
+    return NextResponse.json({ opportunity: mappedOpportunity, contacts });
   } catch (error) {
     console.error('Error fetching opportunity:', error);
     return NextResponse.json(
@@ -85,22 +94,28 @@ export async function PUT(
       probability_percent,
       expected_close_date,
       description,
+      contact_id,
+      account_owner_id,
     } = body;
+
+    // Build update payload - only include contact_id/account_owner_id if explicitly provided
+    const updatePayload: Record<string, any> = {};
+    if (name) updatePayload.name = name;
+    if (status) updatePayload.status = status;
+    if (estimated_value !== undefined) updatePayload.estimated_value = estimated_value;
+    if (probability_percent !== undefined) updatePayload.probability_percent = probability_percent;
+    if (expected_close_date !== undefined) updatePayload.expected_close_date = expected_close_date;
+    if (description !== undefined) updatePayload.description = description;
+    if (contact_id !== undefined) updatePayload.contact_id = contact_id;
+    if (account_owner_id !== undefined) updatePayload.account_owner_id = account_owner_id;
 
     const { data: opportunity, error } = await client
       .from('opportunities')
-      .update({
-        ...(name && { name }),
-        ...(status && { status }),
-        ...(estimated_value !== undefined && { estimated_value }),
-        ...(probability_percent !== undefined && { probability_percent }),
-        ...(expected_close_date !== undefined && { expected_close_date }),
-        ...(description !== undefined && { description }),
-      })
+      .update(updatePayload)
       .eq('id', id)
       .eq('created_by', authData.user.id)
       .select(
-        'id, name, status, estimated_value, probability_percent, expected_close_date, description, account_id, accounts(id, name), created_at, updated_at'
+        'id, name, status, estimated_value, probability_percent, expected_close_date, description, account_id, contact_id, account_owner_id, accounts(id, name), created_at, updated_at'
       )
       .single();
 
@@ -110,12 +125,11 @@ export async function PUT(
 
     // Map account data
     const accounts_put_data = opportunity.accounts as any;
-    const account_name_put = Array.isArray(accounts_put_data)
-      ? accounts_put_data[0]?.name
-      : accounts_put_data?.name;
+    const account_obj_put = Array.isArray(accounts_put_data) ? accounts_put_data[0] : accounts_put_data;
     const mappedOpportunity = {
       ...opportunity,
-      account_name: account_name_put || '',
+      account_name: account_obj_put?.name || '',
+      account: account_obj_put ? { id: account_obj_put.id, name: account_obj_put.name } : null,
     };
 
     if (status) {
@@ -187,3 +201,6 @@ export async function DELETE(
     );
   }
 }
+
+// PATCH - Alias for PUT
+export { PUT as PATCH };

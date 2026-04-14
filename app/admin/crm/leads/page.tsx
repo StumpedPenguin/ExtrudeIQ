@@ -15,6 +15,31 @@ interface Lead {
   created_at: string;
 }
 
+const industryOptions = [
+  'Construction',
+  'Doors and Windows',
+  'Garage Doors',
+  'Commercial Refridgeration',
+  'Appliances',
+  'Shower Doors',
+  'Renewable Energy',
+  'Office Furniture',
+  'Recreational Vehicles',
+  'Medical',
+  'Lighting',
+  'Lawn and Garden',
+];
+
+const formatPhoneNumber = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+
+  if (!digits) return '';
+  if (digits.length < 4) return `(${digits}`;
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+};
+
 export default function LeadsPage() {
   const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -27,6 +52,7 @@ export default function LeadsPage() {
     company_name: '',
     industry: '',
     website: '',
+    description: '',
     lead_source: 'inbound',
     primary_contact_name: '',
     primary_contact_email: '',
@@ -39,6 +65,7 @@ export default function LeadsPage() {
       try {
         const params = new URLSearchParams({ page: page.toString(), limit: '25' });
         if (status) params.append('status', status);
+        else params.append('exclude_status', 'converted');
         if (search) params.append('search', search);
         const res = await fetch(`/api/admin/crm/leads?${params}`);
         if (res.ok) { const data = await res.json(); setLeads(data.leads); }
@@ -58,7 +85,7 @@ export default function LeadsPage() {
       });
       if (res.ok) {
         setShowForm(false);
-        setFormData({ company_name: '', industry: '', website: '', lead_source: 'inbound', primary_contact_name: '', primary_contact_email: '', primary_contact_phone: '' });
+        setFormData({ company_name: '', industry: '', website: '', description: '', lead_source: 'inbound', primary_contact_name: '', primary_contact_email: '', primary_contact_phone: '' });
         setPage(1);
         const fetchRes = await fetch('/api/admin/crm/leads?page=1&limit=25');
         if (fetchRes.ok) { const data = await fetchRes.json(); setLeads(data.leads); }
@@ -108,7 +135,6 @@ export default function LeadsPage() {
               <h1 className="text-xl font-bold text-white tracking-tight">Leads</h1>
             </div>
             <div className="flex gap-3">
-              <Link href="/dashboard" className="aurora-btn-secondary px-4 py-2 text-xs">Home</Link>
               <button onClick={() => setShowForm(true)} className="aurora-btn px-4 py-2 text-xs">+ New Lead</button>
             </div>
           </div>
@@ -136,7 +162,7 @@ export default function LeadsPage() {
         {/* New Lead Modal */}
         {showForm && (
           <div className="aurora-overlay">
-            <div className="glass-card glow-teal max-w-md w-full p-6">
+            <div className="glass-card glow-teal max-w-lg w-full p-6">
               <h2 className="text-xl font-bold mb-5 text-white">Create New Lead</h2>
               <form onSubmit={handleCreateLead} className="space-y-4">
                 <div>
@@ -145,11 +171,18 @@ export default function LeadsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Industry</label>
-                  <input type="text" value={formData.industry} onChange={(e) => setFormData({ ...formData, industry: e.target.value })} className="aurora-input" />
+                  <select value={formData.industry} onChange={(e) => setFormData({ ...formData, industry: e.target.value })} className="aurora-select">
+                    <option value="">Select an industry</option>
+                    {industryOptions.map((industry) => <option key={industry} value={industry}>{industry}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Website</label>
-                  <input type="url" value={formData.website} onChange={(e) => setFormData({ ...formData, website: e.target.value })} className="aurora-input" />
+                  <input type="text" inputMode="url" placeholder="abc123.com" value={formData.website} onChange={(e) => setFormData({ ...formData, website: e.target.value })} className="aurora-input" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+                  <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="aurora-input min-h-[88px]" rows={3} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Lead Source</label>
@@ -171,7 +204,7 @@ export default function LeadsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Contact Phone</label>
-                  <input type="tel" value={formData.primary_contact_phone} onChange={(e) => setFormData({ ...formData, primary_contact_phone: e.target.value })} className="aurora-input" />
+                  <input type="tel" placeholder="(734) 693-4081" value={formData.primary_contact_phone} onChange={(e) => setFormData({ ...formData, primary_contact_phone: formatPhoneNumber(e.target.value) })} className="aurora-input" />
                 </div>
                 <div className="flex gap-3 pt-3">
                   <button type="submit" className="aurora-btn flex-1 py-2.5 text-sm">Create Lead</button>
@@ -206,7 +239,38 @@ export default function LeadsPage() {
                     <td className="font-medium text-white">{lead.company_name}</td>
                     <td>{lead.primary_contact_email || '-'}</td>
                     <td>{lead.lead_source || '-'}</td>
-                    <td><span className={`aurora-badge ${statusColor(lead.status)}`}>{lead.status}</span></td>
+                    <td>
+                      <select
+                        value={lead.status}
+                        onChange={async (e) => {
+                          const newStatus = e.target.value;
+                          try {
+                            const res = await fetch(`/api/admin/crm/leads/${lead.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: newStatus }),
+                            });
+                            if (res.ok) {
+                              if (newStatus === 'converted' && !status) {
+                                setLeads(leads.filter((l) => l.id !== lead.id));
+                              } else {
+                                setLeads(leads.map((l) => l.id === lead.id ? { ...l, status: newStatus } : l));
+                              }
+                            }
+                          } catch (err) { console.error('Error updating status:', err); }
+                        }}
+                        className={`aurora-badge ${statusColor(lead.status)} bg-transparent border-0 cursor-pointer text-xs font-semibold appearance-none pr-4`}
+                        style={{ backgroundImage: 'none' }}
+                      >
+                        <option value="new">new</option>
+                        <option value="contacted">contacted</option>
+                        <option value="qualified">qualified</option>
+                        <option value="proposal">proposal</option>
+                        <option value="negotiating">negotiating</option>
+                        <option value="converted">converted</option>
+                        <option value="lost">lost</option>
+                      </select>
+                    </td>
                     <td>
                       <div className="flex items-center gap-2">
                         <div className="w-16 bg-white/[0.06] rounded-full h-1.5 overflow-hidden">

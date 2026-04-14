@@ -44,16 +44,12 @@ export default async function AdminDashboardPage() {
                 <p className="text-xs text-slate-400">Admin Dashboard · {userName}</p>
               </div>
             </div>
-            <LogoutButton />
+            <div className="flex gap-3">
+              <LogoutButton />
+            </div>
           </div>
         </div>
       </header>
-
-      <div className="border-b border-white/[0.04] bg-[#060918]/30">
-        <div className="mx-auto max-w-6xl px-8 py-3">
-          <Link href="/dashboard" className="text-sm text-aurora-teal/70 hover:text-aurora-teal transition-colors">← Back to Dashboard</Link>
-        </div>
-      </div>
 
       <div className="mx-auto max-w-6xl px-8 py-12">
         <div className="mb-10">

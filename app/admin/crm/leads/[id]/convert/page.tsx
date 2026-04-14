@@ -4,7 +4,32 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-interface Lead { id: string; company: string; first_name: string; last_name: string; email?: string; phone?: string; title?: string; source?: string; status: string; score?: number; }
+interface Lead { id: string; company_name: string; industry?: string; website?: string; lead_source?: string; primary_contact_name?: string; primary_contact_email?: string; primary_contact_phone?: string; status: string; score?: number; }
+
+const industryOptions = [
+  'Construction',
+  'Doors and Windows',
+  'Garage Doors',
+  'Commercial Refridgeration',
+  'Appliances',
+  'Shower Doors',
+  'Renewable Energy',
+  'Office Furniture',
+  'Recreational Vehicles',
+  'Medical',
+  'Lighting',
+  'Lawn and Garden',
+];
+
+const formatPhoneNumber = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+
+  if (!digits) return '';
+  if (digits.length < 4) return `(${digits}`;
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+};
 
 export default function ConvertLeadPage() {
   const params = useParams();
@@ -15,8 +40,8 @@ export default function ConvertLeadPage() {
   const [converting, setConverting] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
-    account_name: '', account_type: 'customer', industry: '', website: '', phone: '',
-    create_opportunity: true, opportunity_name: '', estimated_value: '', probability_percent: 25, expected_close_date: ''
+    account_name: '', account_type: 'prospect', industry: '', website: '', phone: '',
+    create_opportunity: false, opportunity_name: '', estimated_value: '', probability_percent: 25, expected_close_date: ''
   });
 
   useEffect(() => {
@@ -27,7 +52,14 @@ export default function ConvertLeadPage() {
         if (res.ok) {
           const data = await res.json();
           setLead(data);
-          setForm((prev) => ({ ...prev, account_name: data.company || '', phone: data.phone || '', opportunity_name: `${data.company} - New Opportunity` }));
+          setForm((prev) => ({
+            ...prev,
+            account_name: data.company_name || '',
+            industry: data.industry || '',
+            website: data.website || '',
+            phone: data.primary_contact_phone ? formatPhoneNumber(data.primary_contact_phone) : '',
+            opportunity_name: `${data.company_name} - New Opportunity`,
+          }));
         }
       } catch (err) { console.error('Error fetching lead:', err); }
       finally { setLoading(false); }
@@ -47,7 +79,7 @@ export default function ConvertLeadPage() {
         body.opportunity = { name: form.opportunity_name, estimated_value: form.estimated_value ? Number(form.estimated_value) : undefined, probability_percent: form.probability_percent, expected_close_date: form.expected_close_date || undefined };
       }
       const res = await fetch(`/api/admin/crm/leads/${leadId}/convert`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (res.ok) { const data = await res.json(); router.push(`/admin/crm/accounts/${data.account_id}`); }
+      if (res.ok) { const data = await res.json(); router.push(`/admin/crm/accounts/${data.account.id}`); }
       else { const d = await res.json(); setError(d.error || 'Conversion failed'); }
     } catch (err) { setError('Network error'); console.error(err); }
     finally { setConverting(false); }
@@ -75,12 +107,12 @@ export default function ConvertLeadPage() {
         <div className="glass-card glow-teal p-6 mb-8">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">Lead Information</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div><span className="text-slate-500">Name:</span> <span className="text-white font-medium ml-1">{lead.first_name} {lead.last_name}</span></div>
-            <div><span className="text-slate-500">Company:</span> <span className="text-white font-medium ml-1">{lead.company}</span></div>
-            {lead.email && <div><span className="text-slate-500">Email:</span> <span className="text-white font-medium ml-1">{lead.email}</span></div>}
-            {lead.phone && <div><span className="text-slate-500">Phone:</span> <span className="text-white font-medium ml-1">{lead.phone}</span></div>}
-            {lead.title && <div><span className="text-slate-500">Title:</span> <span className="text-white font-medium ml-1">{lead.title}</span></div>}
-            {lead.source && <div><span className="text-slate-500">Source:</span> <span className="text-white font-medium ml-1">{lead.source}</span></div>}
+            <div><span className="text-slate-500">Company:</span> <span className="text-white font-medium ml-1">{lead.company_name}</span></div>
+            {lead.primary_contact_name && <div><span className="text-slate-500">Contact:</span> <span className="text-white font-medium ml-1">{lead.primary_contact_name}</span></div>}
+            {lead.primary_contact_email && <div><span className="text-slate-500">Email:</span> <span className="text-white font-medium ml-1">{lead.primary_contact_email}</span></div>}
+            {lead.primary_contact_phone && <div><span className="text-slate-500">Phone:</span> <span className="text-white font-medium ml-1">{lead.primary_contact_phone}</span></div>}
+            {lead.industry && <div><span className="text-slate-500">Industry:</span> <span className="text-white font-medium ml-1">{lead.industry}</span></div>}
+            {lead.lead_source && <div><span className="text-slate-500">Source:</span> <span className="text-white font-medium ml-1">{lead.lead_source}</span></div>}
           </div>
         </div>
 
@@ -93,12 +125,12 @@ export default function ConvertLeadPage() {
             <div className="space-y-4">
               <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Account Name *</label><input type="text" required value={form.account_name} onChange={(e) => setForm({ ...form, account_name: e.target.value })} className="aurora-input" /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Type</label><select value={form.account_type} onChange={(e) => setForm({ ...form, account_type: e.target.value })} className="aurora-select"><option value="customer">Customer</option><option value="prospect">Prospect</option><option value="partner">Partner</option><option value="vendor">Vendor</option></select></div>
-                <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Industry</label><input type="text" value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} className="aurora-input" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Type</label><select value={form.account_type} onChange={(e) => setForm({ ...form, account_type: e.target.value })} className="aurora-select"><option value="prospect">Prospect</option><option value="existing">Existing Customer</option><option value="partner">Partner</option></select></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Industry</label><select value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} className="aurora-select"><option value="">Select an industry</option>{industryOptions.map((industry) => <option key={industry} value={industry}>{industry}</option>)}</select></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Website</label><input type="url" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} className="aurora-input" /></div>
-                <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Phone</label><input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="aurora-input" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Website</label><input type="text" inputMode="url" placeholder="abc123.com" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} className="aurora-input" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1.5">Phone</label><input type="tel" placeholder="(734) 693-4081" value={form.phone} onChange={(e) => setForm({ ...form, phone: formatPhoneNumber(e.target.value) })} className="aurora-input" /></div>
               </div>
             </div>
           </div>

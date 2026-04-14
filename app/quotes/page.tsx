@@ -63,7 +63,6 @@ export default async function QuotesListPage({
               <h1 className="text-xl font-bold text-white tracking-tight">Quotes</h1>
             </div>
             <div className="flex gap-3">
-              <Link href="/dashboard" className="aurora-btn-secondary px-4 py-2 text-xs">Home</Link>
               <Link href="/quotes/new" className="aurora-btn px-4 py-2 text-xs">New Quote</Link>
             </div>
           </div>

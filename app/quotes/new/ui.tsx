@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 type Material = {
   id: string;
@@ -21,8 +22,12 @@ export default function NewQuoteForm({
   accounts: Account[];
   opportunities?: Opportunity[];
 }) {
-  const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
-  const [opportunityId, setOpportunityId] = useState("");
+  const searchParams = useSearchParams();
+  const initialAccountId = searchParams.get('account_id') || accounts[0]?.id || "";
+  const initialOpportunityId = searchParams.get('opportunity_id') || "";
+
+  const [accountId, setAccountId] = useState(initialAccountId);
+  const [opportunityId, setOpportunityId] = useState(initialOpportunityId);
   const [materialId, setMaterialId] = useState(materials[0]?.id ?? "");
   const [finishedLen, setFinishedLen] = useState<number>(48);
   const [eauBase, setEauBase] = useState<number>(1000);

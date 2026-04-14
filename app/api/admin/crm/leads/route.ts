@@ -27,6 +27,12 @@ export async function GET(req: Request) {
       query = query.eq('status', status);
     }
 
+    // Exclude a status (used to hide converted leads by default)
+    const excludeStatus = searchParams.get('exclude_status');
+    if (excludeStatus) {
+      query = query.neq('status', excludeStatus);
+    }
+
     // Search by company name or contact info
     if (search) {
       query = query.or(`company_name.ilike.%${search}%,primary_contact_name.ilike.%${search}%,primary_contact_email.ilike.%${search}%`);
@@ -76,6 +82,7 @@ export async function POST(req: Request) {
       company_name,
       industry,
       website,
+      description,
       lead_source,
       primary_contact_name,
       primary_contact_email,
@@ -94,6 +101,7 @@ export async function POST(req: Request) {
       company_name,
       industry: industry || null,
       website: website || null,
+      description: description || null,
       lead_source: lead_source || null,
       primary_contact_name: primary_contact_name || null,
       primary_contact_email: primary_contact_email || null,
